@@ -37,6 +37,7 @@ The application follows a strictly decoupled client-side prehospital architectur
   - Full end-to-end user journey simulation -> Verified
 
 ## Deployment Status
-- **Temporary Live HTTPS URL**: `https://petite-lies-warn.loca.lt`
+- **Live Public HTTPS URL**: `https://6b1805eb2888e8.lhr.life`
+- **GitHub Repository**: `https://github.com/rishika526/Vice-Versa`
 - **Local Preview Server**: `http://localhost:4173/`
-- **Render / Cloudflare / Netlify / Vercel**: Ready for production deployment using `dist/`.
+- **Render / Cloudflare / Netlify / Vercel**: Ready for 1-click production deployment using `render.yaml` or `dist/`.

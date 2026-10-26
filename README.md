@@ -11,9 +11,10 @@
 
 ## 1. Public Prototype Link
 
-- **Live HTTPS Demo**: [https://petite-lies-warn.loca.lt](https://petite-lies-warn.loca.lt)  
-  *(Note: If prompted with Localtunnel's landing page, click "Click to Continue" or use header `bypass-tunnel-reminder: true`)*
-- **Local Preview**: `http://localhost:4173/` (via `npm run preview -- --port 4173 --host`)
+- **Live HTTPS Demo**: [https://6b1805eb2888e8.lhr.life](https://6b1805eb2888e8.lhr.life)  
+  *(Public HTTPS URL with TLS termination; microphone & PWA service worker enabled)*
+- **GitHub Repository**: [https://github.com/rishika526/Vice-Versa](https://github.com/rishika526/Vice-Versa)
+- **Local Preview**: `http://localhost:4173/` (via `npm run preview`)
 - **One-line Deploy to Netlify / Vercel**:
   ```bash
   # Deploy to Netlify
