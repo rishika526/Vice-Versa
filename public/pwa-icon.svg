@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E7C86" />
+      <stop offset="100%" stop-color="#14B8A6" />
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#grad)" />
+  
+  <!-- Outer glowing ring -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#FFFFFF" stroke-opacity="0.25" stroke-width="12" />
+  
+  <!-- Medical Cross / Shield background -->
+  <rect x="220" y="128" width="72" height="256" rx="20" fill="#FFFFFF" fill-opacity="0.15" />
+  <rect x="128" y="220" width="256" height="72" rx="20" fill="#FFFFFF" fill-opacity="0.15" />
+  
+  <!-- Mic Body -->
+  <rect x="226" y="160" width="60" height="110" rx="30" fill="#FFFFFF" />
+  <!-- Mic Arc -->
+  <path d="M196 230 C 196 296, 316 296, 316 230" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" />
+  <!-- Mic Base -->
+  <line x1="256" y1="296" x2="256" y2="345" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" />
+  <line x1="216" y1="345" x2="296" y2="345" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" />
+
+  <!-- Heartbeat / Voice waves on the sides -->
+  <path d="M100 256 L 140 256 L 155 220 L 170 290 L 185 256" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M327 256 L 342 220 L 357 290 L 372 256 L 412 256" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
