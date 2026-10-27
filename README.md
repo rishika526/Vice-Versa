@@ -11,7 +11,7 @@
 
 ## 1. Public Prototype Link
 
-- **Live HTTPS Demo**: [https://6b1805eb2888e8.lhr.life](https://6b1805eb2888e8.lhr.life)  
+- **Live HTTPS Demo**: [https://vice-versa.pages.dev/](https://vice-versa.pages.dev/)  
   *(Public HTTPS URL with TLS termination; microphone & PWA service worker enabled)*
 - **GitHub Repository**: [https://github.com/rishika526/Vice-Versa](https://github.com/rishika526/Vice-Versa)
 - **Local Preview**: `http://localhost:4173/` (via `npm run preview`)
