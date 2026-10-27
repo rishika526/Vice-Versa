@@ -15,19 +15,7 @@
   *(Public HTTPS URL with TLS termination; microphone & PWA service worker enabled)*
 - **GitHub Repository**: [https://github.com/rishika526/Vice-Versa](https://github.com/rishika526/Vice-Versa)
 - **Local Preview**: `http://localhost:4173/` (via `npm run preview`)
-- **One-line Deploy to Netlify / Vercel**:
-  ```bash
-  # Deploy to Netlify
-  npx -y netlify-cli deploy --dir=dist --prod
 
-  # Deploy to Vercel
-  npx -y vercel deploy --prod --yes
-
-  # Deploy to Cloudflare Pages
-  npx -y wrangler pages deploy dist --project-name=f2r-field-to-record
-  ```
-
----
 
 ## 2. Tech Stack & Library Versions
 
