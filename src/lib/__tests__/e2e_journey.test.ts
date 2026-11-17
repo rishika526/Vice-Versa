@@ -84,13 +84,15 @@ describe('End-to-End Clinical Flow: Missing-Data, Chain & Export', () => {
     expect(auditResult.count).toBe(2);
     expect(auditResult.message).toContain('all 2 record(s) cryptographically intact');
 
-    // STEP 7: Export FHIR-lite JSON
+    // STEP 7: Export FHIR Record Bundle
     const fhirBundle = buildFHIRBundle([rec1, rec2]);
     expect(fhirBundle.resourceType).toBe('Bundle');
     expect(fhirBundle.entry).toHaveLength(2);
     expect(fhirBundle.entry[0].resource.medicationCodeableConcept.text).toBe('Epinephrine');
     expect(fhirBundle.entry[0].resource.dosage.route.text).toBe('IM');
-    expect(fhirBundle.entry[0].resource.identifier[0].value).toBe(hash1);
+    expect(fhirBundle.entry[0].resource.identifier[0].system).toBe('urn:f2r:hlc:timestamp');
+    expect(fhirBundle.entry[0].resource.identifier[1].system).toBe('urn:f2r:device:id');
+    expect(fhirBundle.entry[0].resource.identifier[1].value).toBe('MEDIC-04-RIG-TABLET');
     expect(fhirBundle.entry[1].resource.medicationCodeableConcept.text).toBe('Midazolam');
 
     // STEP 8: Copy Run-sheet summary text

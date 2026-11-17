@@ -30,6 +30,8 @@ export interface ExtractedRecord {
   capturedAt: string;     // ISO 8601
   rawText: string;
   timeType: 'just_now' | 'relative' | 'explicit' | 'default_now';
+  isProcedure?: boolean;
+  procedureName?: string | null;
   extractedFields: {
     drug: boolean;
     dose: boolean;
@@ -38,6 +40,30 @@ export interface ExtractedRecord {
     reason: boolean;
     time: boolean;
   };
+}
+
+export type EntityTag = 'DRUG' | 'DOSE' | 'ROUTE' | 'REASON' | 'TIME' | 'PROCEDURE' | 'O';
+
+export interface NERToken {
+  text: string;
+  tag: EntityTag;
+  confidence: number;
+}
+
+export interface ExtractedNERResult extends ExtractedRecord {
+  engine: 'transformers-quantized' | 'clinical-rule-hybrid';
+  modelName: string;
+  latencyMs: number;
+  confidence: {
+    drug: number;
+    dose: number;
+    route: number;
+    reason: number;
+    overall: number;
+  };
+  tokens: NERToken[];
+  isProcedure: boolean;
+  procedureName: string | null;
 }
 
 export interface ConfirmedRecord {
@@ -55,6 +81,11 @@ export interface ConfirmedRecord {
   timestamp: number;
   safetyWarnings: string[];
   safetyAcknowledged: boolean;
+  fhirResource?: any;
+  isProcedure?: boolean;
+  procedureName?: string | null;
+  isReconciled?: boolean;
+  reconciledAt?: string;
 }
 
 export interface ChainVerificationResult {
@@ -67,4 +98,14 @@ export interface ChainVerificationResult {
 export interface SafetyCheckResult {
   warnings: string[];
   isWarning: boolean;
+}
+
+export type ViewMode = 'paramedic' | 'hospital';
+
+export interface AmbulanceTelemetryEvent {
+  id: string;
+  timestamp: number;
+  record: ConfirmedRecord;
+  fhirJson: any;
+  receivedAt: string;
 }

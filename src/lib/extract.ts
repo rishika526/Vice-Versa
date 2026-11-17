@@ -22,6 +22,24 @@ const DRUG_LEXICON: DrugLexiconEntry[] = [
   { canonical: 'Normal Saline', aliases: ['normal saline', 'saline', '0.9 nacl', 'nacl'] },
 ];
 
+export interface ProcedureLexiconEntry {
+  canonical: string;
+  aliases: string[];
+}
+
+export const PROCEDURE_LEXICON: ProcedureLexiconEntry[] = [
+  { canonical: 'CPR (Cardiopulmonary Resuscitation)', aliases: ['cpr', 'chest compressions', 'cardiopulmonary resuscitation', 'compressions', 'hands-only cpr', 'cardiac massage'] },
+  { canonical: 'Defibrillation / Shock', aliases: ['defibrillation', 'defib', 'shock delivered', 'aed shock', 'defibrillated', 'shocked'] },
+  { canonical: 'Endotracheal Intubation', aliases: ['intubation', 'intubated', 'ett', 'endotracheal tube', 'advanced airway'] },
+  { canonical: 'Bag Valve Mask (BVM) Ventilation', aliases: ['bvm', 'bag valve mask', 'bvm ventilation', 'bagging', 'ventilated'] },
+  { canonical: 'Tourniquet Application', aliases: ['tourniquet', 'applied tourniquet', 'cat tourniquet'] },
+  { canonical: 'Transcutaneous Pacing', aliases: ['transcutaneous pacing', 'cardiac pacing', 'pacing', 'external pacing'] },
+  { canonical: 'Synchronized Cardioversion', aliases: ['cardioversion', 'synchronized cardioversion'] },
+  { canonical: 'Needle Decompression', aliases: ['needle decompression', 'chest decompression', 'needle thoracostomy'] },
+  { canonical: 'Airway Suctioning', aliases: ['suctioning', 'suctioned airway', 'suction'] },
+  { canonical: 'Supraglottic Airway (i-Gel / King LTS-D)', aliases: ['i-gel', 'igel', 'king airway', 'laryngeal mask', 'supraglottic airway'] },
+];
+
 const ROUTE_RULES: { route: MedRoute; regex: RegExp }[] = [
   { route: 'IV push', regex: /\b(iv\s*push|intravenous\s*push|i\.v\.\s*push)\b/i },
   { route: 'IV', regex: /\b(iv|intravenous|i\.v\.)\b/i },
@@ -226,6 +244,35 @@ export function extractNote(text: string, referenceTime: Date = new Date()): Ext
     }
   }
 
+  // 6. Check for Procedures (CPR, Defibrillation, Intubation, etc.)
+  // Requirement: "If the NLP detects a procedure, or if no Drug is found but text is present (like "CPR"), toggle the Draft Note into "Procedure Mode"."
+  let detectedProcedure: string | null = null;
+  for (const entry of PROCEDURE_LEXICON) {
+    for (const alias of entry.aliases) {
+      const regex = new RegExp(`\\b${alias.replace(/\s+/g, '\\s+')}\\b`, 'i');
+      if (regex.test(lower)) {
+        detectedProcedure = entry.canonical;
+        break;
+      }
+    }
+    if (detectedProcedure) break;
+  }
+
+  const hasText = normalized.length > 0;
+  const isProcedure = Boolean(detectedProcedure || (!drug && hasText));
+  const procedureName = detectedProcedure || (isProcedure ? normalized : null);
+
+  // If procedure detected and no reason was explicitly extracted, default/infer reason if applicable
+  if (isProcedure && !reason) {
+    if (
+      procedureName?.toLowerCase().includes('cpr') ||
+      procedureName?.toLowerCase().includes('defib') ||
+      procedureName?.toLowerCase().includes('pacing')
+    ) {
+      reason = 'cardiac arrest';
+    }
+  }
+
   return {
     drug,
     dose,
@@ -236,6 +283,8 @@ export function extractNote(text: string, referenceTime: Date = new Date()): Ext
     capturedAt,
     rawText: normalized,
     timeType,
+    isProcedure,
+    procedureName,
     extractedFields: {
       drug: drug !== null,
       dose: dose !== null,

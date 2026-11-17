@@ -1,6 +1,8 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { ConfirmedRecord } from './types';
 import { GENESIS_HASH } from './chain';
+import { buildFHIRMedicationAdministration } from './fhir';
+import { broadcastConfirmedMedication } from './hospitalFeed';
 
 interface F2RDatabase extends DBSchema {
   records: {
@@ -56,11 +58,18 @@ export async function getLatestRecord(): Promise<ConfirmedRecord | null> {
 }
 
 /**
- * Saves a sealed record into IndexedDB.
+ * Saves a sealed record into IndexedDB and optionally broadcasts to Hospital ED.
  */
-export async function saveRecord(record: ConfirmedRecord): Promise<void> {
+export async function saveRecord(record: ConfirmedRecord, broadcast = true): Promise<void> {
   const db = await getDB();
+  if (!record.fhirResource) {
+    record.fhirResource = buildFHIRMedicationAdministration(record);
+  }
   await db.put('records', record);
+  // Broadcast update to ED hospital dashboard in real-time
+  if (broadcast) {
+    broadcastConfirmedMedication(record);
+  }
 }
 
 /**

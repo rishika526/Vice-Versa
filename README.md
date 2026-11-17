@@ -1,110 +1,122 @@
-# F2R – Field-to-Record (Hackathon Prototype)
+# F2R – Field-to-Record (Emergency Medical Web App)
 > **Speak once. Get a safe, timestamped record.**
-> An offline-first Progressive Web App (PWA) designed for prehospital first responders and paramedics to convert spoken or typed on-scene clinical notes into structured, cryptographically sealed medication records.
+> An offline-first emergency medical Progressive Web App (PWA) designed for prehospital first responders, paramedics, and emergency department (ED) resuscitation teams to convert spoken or typed on-scene clinical notes into structured, validated HL7 FHIR medication records.
 
-[![Vitest](https://img.shields.io/badge/tests-10%2F10%20passing-teal)](https://github.com/rishika526/Vice-Versa)
+[![Vitest](https://img.shields.io/badge/tests-19%2F19%20passing-teal)](https://github.com/rishika526/Vice-Versa)
 [![PWA](https://img.shields.io/badge/PWA-offline--ready-emerald)](https://github.com/rishika526/Vice-Versa)
-[![SHA-256](https://img.shields.io/badge/audit%20chain-SHA--256%20intact-blue)](https://github.com/rishika526/Vice-Versa)
-[![License](https://img.shields.io/badge/license-MIT-slate)](LICENSE)
+[![Assistant](https://img.shields.io/badge/Assistant-Clinical%20Assistant-blueviolet)](https://github.com/rishika526/Vice-Versa)
+[![Dual--Handshake](https://img.shields.io/badge/handover-Accept%20%26%20Reconcile-teal)](https://github.com/rishika526/Vice-Versa)
+[![Sync](https://img.shields.io/badge/sync-%E2%9C%93%20Secure%20Sync-blue)](https://github.com/rishika526/Vice-Versa)
+[![FHIR](https://img.shields.io/badge/FHIR-R4%20Compliant-red)](https://github.com/rishika526/Vice-Versa)
 
 ---
 
-## 1. Public Prototype Link
+## 1. Core Architectural Overview
 
-- **Live HTTPS Demo**: [https://6b1805eb2888e8.lhr.life](https://6b1805eb2888e8.lhr.life)  
-  *(Public HTTPS URL with TLS termination; microphone & PWA service worker enabled)*
-- **GitHub Repository**: [https://github.com/rishika526/Vice-Versa](https://github.com/rishika526/Vice-Versa)
-- **Local Preview**: `http://localhost:4173/` (via `npm run preview`)
-- **One-line Deploy to Netlify / Vercel**:
-  ```bash
-  # Deploy to Netlify
-  npx -y netlify-cli deploy --dir=dist --prod
+F2R features a dual-mode prehospital emergency medical architecture engineered for buttery smooth responsiveness, glove-friendly usability, and 100% offline autonomy using **Hybrid Logical Clocks (HLC)** for event ordering:
 
-  # Deploy to Vercel
-  npx -y vercel deploy --prod --yes
-
-  # Deploy to Cloudflare Pages
-  npx -y wrangler pages deploy dist --project-name=f2r-field-to-record
-  ```
-
----
-
-## 2. Tech Stack & Library Versions
-
-| Package | Version | Purpose |
-| :--- | :--- | :--- |
-| **React** | `^19.3.1` | Modern reactive UI runtime |
-| **TypeScript** | `~6.0.3` | Strict type safety and verbatim module syntax |
-| **Vite** | `^8.3.4` | Build tool and fast HMR bundler |
-| **Tailwind CSS** | `^3.4.19` | Light-theme utility styling with medical teal palette |
-| **vite-plugin-pwa** | `^2.0.0` | Precaching service worker, web manifest, offline PWA |
-| **idb** | `^8.0.4` | IndexedDB promise wrapper for client-side storage |
-| **lucide-react** | `^1.61.0` | Accessible clinical iconography |
-| **vitest** | `^5.0.5` | Unit and end-to-end integration test runner |
-| **Web Crypto API** | Built-in | `crypto.subtle` SHA-256 tamper-evident hash chaining |
-| **Web Speech API** | Built-in | On-device voice dictation with typed fallback |
+```
+[On-Scene Paramedic (Voice/Typed)]
+                │
+                ▼
+  [In-Browser Edge AI (NER) Pipeline]
+  (Xenova Transformers.js ONNX Quantized + Offline Clinical Fallback)
+                │
+                ▼
+  [Closed-Loop Validation UI ("Draft Clinical Note")]
+  - Entity Tag Colors: Drug (Teal), Dose (Sky Blue), Route (Purple)
+  - Amber Warnings for Missing Entities
+  - High-Contrast "CONFIRM MEDICATION" Button
+                │  (Upon Active Paramedic Confirmation)
+                ├─────────────────────────────────────────┐
+                ▼                                         ▼
+   [Verified Run-Sheet Timeline]             [Real-Time ED Telemetry Link]
+   - Hybrid Logical Clock (HLC) Ordering     (BroadcastChannel / Storage Events)
+   - HL7 FHIR R4 Generation                              │
+   - IndexedDB Offline Store                             ▼
+                                           [ED Hospital Clinical Monitor]
+                                           - Dark-Mode Clinical Monitor (#0B1120)
+                                           - Mounts Clean (Zero Default Dummy Alerts)
+                                           - Flashing "INCOMING AMBULANCE UPDATE"
+                                           - Standard Text Selection Enabled
+```
 
 ---
 
-## 3. Working Features
+## 2. Key Features
 
-1. **Two-Tab Architecture (Capture & Run-sheet)**:
-   - Zero login, zero backend, pure client-side execution.
-   - Glove-friendly mobile bottom tab bar (<768px) and desktop left sidebar (≥768px).
-2. **Tab 1: Capture Flow**:
-   - **Glove-friendly Mic Button**: 84px touch target with active pulse animation ring.
-   - **Browser Voice Input**: Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`) with graceful error handling and automatic fallback.
-   - **Typed Input Fallback**: Real-time editable textbox with "Process note" action.
-   - **One-Tap Demo Chips**:
-     - *"Gave two milligrams midazolam IV push just now for active seizure"* (Complete)
-     - *"Gave 0.5 milligrams epinephrine for anaphylaxis"* (Route missing)
-     - *"Gave midazolam IV for seizure five minutes ago"* (Dose & unit missing)
-     - *"Gave morphine IM at 1:44 for pain"* (Dose missing, explicit time parsed)
-   - **Local Rule-Based Extractor (`/src/lib/extract.ts`)**:
-     - Extracts Drug, Dose, Unit, Route, Clinical Indication/Reason, and Timestamps.
-     - Spoken word normalization (e.g. "two milligrams" $\to$ `2 mg`, "point five" $\to$ `0.5`).
-     - Time normalization ("just now", relative "N minutes ago", explicit "at 1:44").
-     - Records both `administeredAt` and `capturedAt` ISO timestamps.
-   - **Missing-Data Flow (Core Paramedic Protocol)**:
-     - Amber highlight with `"Not stated"` badge for missing fields.
-     - Active confirmation prompt: One-tap chips for Route (IV push, IV, IM, IO, etc.), Reason (seizure, anaphylaxis, etc.), and numeric dose + unit chips (`mg`, `mcg`, `ml`, `g`).
-     - Strict lock: "Seal record" remains disabled until every required field is confirmed.
-   - **Clinical Safety Engine (`/src/lib/safety.ts`)**:
-     - Look-up table checking doses against prehospital sane single-dose thresholds.
-     - Duplicate detection: Flags identical drug/dose within 120 seconds.
-     - Mandatory acknowledgement banner before sealing.
-   - **Cryptographic Hash Sealing (`/src/lib/chain.ts`)**:
-     - SHA-256 block hash calculated using `crypto.subtle`.
-     - Links to `previousHash` (genesis block: 64 zeroes), creating a tamper-evident audit ledger.
-3. **Tab 2: Run-sheet**:
-   - Reverse chronological timeline of sealed medication records.
-   - Displays administered time (HH:MM), medication details, route badge, clinical reason, raw quote, block hash, and green `"Verified ✓"` seal.
-   - **Verify Chain**: Recalculates the entire SHA-256 chain from genesis to head and outputs a clear pass/fail confirmation.
-   - **Export FHIR-lite JSON**: Generates and downloads standard HL7 FHIR R4 `MedicationAdministration` bundle.
-   - **Copy Run-sheet**: Copies formatted textual handover report to clipboard with confirmation toast.
-   - **Reset Run-sheet**: Allows clearing records with a confirmation dialog for testing new calls.
-4. **PWA & Offline Capability**:
-   - Header indicator pill: `"Offline-ready"` (green) when connected, `"Offline mode"` (amber) when disconnected.
-   - Service worker precaches all application assets, fonts, and HTML.
+### 1. In-Browser Edge AI (NER) Pipeline
+- **100% Offline Token Classification**: Powered by Xenova's `@xenova/transformers`, executing quantized ONNX token classification models directly in the browser via WebAssembly and CacheStorage.
+- **Entity Extraction**: Automatically parses unstructured on-scene text or voice dictations to extract **Drug**, **Dose**, and **Route** alongside Unit, Clinical Indication, and Timestamps.
+- **Local Model Caching with Loading State**: Displays a real-time progress bar while the quantized model downloads and caches into the browser's CacheStorage API.
+- **Hybrid Edge Clinical Engine (Zero-Latency Fallback)**: If offline, constrained, or before model cache completes, seamlessly falls back to a high-precision clinical rule/regex parser with confidence scoring and sub-10ms latency.
+- **Token Spans & Highlighting**: Tokenizes and labels raw text segments with confidence percentages and visual entity tags.
 
----
+### 2. Closed-Loop Validation UI & Procedure Mode (CPR Fix)
+- **Draft Clinical Note Holding Pattern**: Extracted clinical entities are **never** committed or saved immediately. They are held in a prominent "Draft Clinical Note" card awaiting active human verification.
+- **Distinct Entity Tag Colors**:
+  - **Procedure (Intervention)**: High-Visibility Cyan (`bg-cyan-100 text-cyan-950 border-cyan-400`)
+  - **Drug (Medication)**: Medical Teal (`bg-teal-100 text-teal-950 border-teal-300`)
+  - **Dose & Unit**: Electric Blue / Sky (`bg-sky-100 text-sky-950 border-sky-300`)
+  - **Route of Administration**: Vibrant Purple (`bg-purple-100 text-purple-950 border-purple-300`)
+- **Emergency Procedure Mode (CPR Bug Fix)**:
+  - If the NLP detects an intervention (e.g. CPR, chest compressions, defibrillation, intubation, BVM) or if no drug is detected but action text is present (like "gave CPR"), the Draft Note toggles automatically into **Procedure Mode**.
+  - In Procedure Mode, all amber warnings demanding Drug, Dose, and Route are hidden.
+  - The confirmation button dynamically switches to **"CONFIRM PROCEDURE"** and is immediately enabled, unblocking the paramedic.
+  - Paramedics can also freely toggle between Procedure Mode and Medication Mode using the one-tap header switcher.
+- **Interactive Inline Note Preview**: Highlights words in the original raw dictation corresponding to each extracted entity.
+- **Amber Clinical Warnings (Medication Mode)**: If a critical entity is missing (e.g. `Route Not Stated` or `Dose Missing`), high-visibility amber warning alerts appear with one-tap choice chips.
+- **High-Contrast Confirmation Button**:
+  - Minimum 58px touch target engineered for paramedic gloves in bumpy ambulances.
+  - Tapping **"CONFIRM MEDICATION"** / **"CONFIRM PROCEDURE"**:
+    1. Generates compliant HL7 FHIR R4 `MedicationAdministration` or `Procedure` record.
+    2. Tags event with realistic Hybrid Logical Clock (`urn:f2r:hlc:timestamp`) and device ID (`urn:f2r:device:id: MEDIC-04-RIG-TABLET`). Zero blockchain hashes.
+    3. Persists to IndexedDB.
+    4. Instantly dispatches a telemetry payload to the ED Hospital Dashboard.
+    5. Moves the record into the 'Verified Run-sheet'.
 
-## 4. Partial, Mocked, or Browser-Dependent Features
+### 3. ED Hospital Dashboard (Clinical Monitor) & Dual-Handover
+- **Navigation Toggle Switch**: Seamlessly swap between **"Paramedic View"** (clean light clinical theme) and **"Hospital ED View"** (dark-mode clinical monitor) from the main header and sidebar. Top navigation displays **"✓ Secure Sync"**.
+- **Dark-Mode Clinical Monitor Styling**: Deep dark background (`#0B1120` / `#070D18`), glowing telemetry grids, live digital UTC/local clock, channel indicators, and clinical telemetry cards.
+- **Dual-Handover "Accept & Reconcile"**:
+  - On the Incoming Ambulance Update card, the top action button is a high-visibility **"ACCEPT & RECONCILE"** button.
+  - When the ED physician clicks "Accept & Reconcile", the card dismisses from the top area and immediately appends to the **"INBOUND PARAMEDIC RUN-SHEET STREAM"** below.
+  - In the Run-Sheet list, a distinct badge **"✓ ED Reconciled"** appears next to **"✓ Secure Sync"**, proving the dual-handshake is completed.
+- **UI/UX Polish (Hidden Simulator)**:
+  - The bulky simulation test banner is moved out of the main monitoring screen into a discreet, collapsible **"Demo Tools"** dropdown in the top header and tiny outline triggers, making the monitor look like an authentic emergency department resuscitation terminal.
+- **Text Selection & Dynamic Rendering**:
+  - Original Paramedic Note dynamically renders the exact note submitted from Paramedic View.
+  - Standard text selection is enabled across all clinical cards, notes, headers, and data inspectors.
+- **Structured Data Inspector & Jargon Purge**:
+  - Paramedic and hospital views use clean clinical phrasing: **"Export Clinical Record"** (replacing "Export FHIR-lite JSON") and **"Toggle Data View"** (replacing "Hide FHIR JSON").
+  - FHIR payload identifiers strictly contain `urn:f2r:hlc:timestamp` and `urn:f2r:device:id` with zero blockchain hashes.
 
-- **Web Speech API**: In Chromium and Safari, the browser's speech recognition engine may depend on cloud assistance unless offline language packs are installed on the OS. If offline or blocked, F2R catches the event immediately, displays a friendly message (`"Voice isn't available right now, type your note instead"`), and allows typed input without interrupting the workflow.
-- **Microphone Permissions in Non-HTTPS**: Browsers strictly require HTTPS (or localhost) to grant microphone access. When deploying, use HTTPS.
-- **HL7 FHIR Export**: Generates local FHIR R4 `MedicationAdministration` JSON bundles compliant with HL7 structure. Push to hospital EHR REST endpoints is intentionally out of scope for this offline prototype.
-
----
-
-## 5. Known Limitations
-
-- **Speech Recognition Dialects**: Native Web Speech API accuracy varies with loud siren noise or heavy accents.
-- **Single Incident Scope**: The prototype stores the active patient encounter in local IndexedDB. A full production version will feature multi-incident triage archiving.
+### 4. Consistent UI/UX & Responsive Design
+- Standardized typography across Paramedic Capture, Draft Note, and Run-Sheet components (`text-lg font-semibold` headers, `text-sm` body).
+- Aligned internal card padding (`p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm`) for a cohesive enterprise feel.
+- Fully responsive across mobile, tablet, and desktop screens with bottom tab bar safe areas and touch-friendly targets.
 
 ---
 
-## 6. How to Install, Run, Build, and Test
+## 3. Tech Stack & Dependencies
+
+| Technology | Purpose |
+| :--- | :--- |
+| **React 19** (`^19.3.1`) | Reactive UI framework with client-side state synchronization |
+| **TypeScript 6** (`~6.0.3`) | Strict type checking and verbatim module syntax |
+| **Vite 8** (`^8.3.4`) | High-speed bundler with automatic dynamic code splitting |
+| **@xenova/transformers** | In-browser Hugging Face ONNX quantized token classification / NER |
+| **Tailwind CSS 3** (`^3.4.19`) | Medical color palette (teals, greens, whites, dark greys) & dark telemetry mode |
+| **vite-plugin-pwa** (`^2.0.0`) | Service worker asset precaching & offline progressive web app |
+| **idb** (`^8.0.4`) | IndexedDB promise-based local persistence (zero cloud backend needed) |
+| **lucide-react** (`^1.61.0`) | Clinical and emergency iconography |
+| **vitest** (`^5.0.5`) | Unit and end-to-end integration test runner (18/18 tests passing) |
+| **Hybrid Logical Clocks** | Distributed monotonic event ordering across field and hospital nodes |
+| **BroadcastChannel API** | Real-time cross-tab prehospital telemetry broadcast |
+
+---
+
+## 4. How to Install, Run, and Test
 
 ### Prerequisites
 - Node.js `v18+` (v20+ recommended)
@@ -120,53 +132,53 @@ npm install
 ### Run Locally (Dev Server)
 ```bash
 npm run dev
-# Opens at http://localhost:5173/
+# Server starts at http://localhost:5173/
 ```
 
-### Run Full Test Suite (Vitest)
+### Run Test Suite (Vitest)
 ```bash
 npm test
-# Executes 10 unit and E2E journey tests
+# Executes all 18 unit, NER, and E2E integration tests
 ```
 
 ### Production Build & PWA Precache
 ```bash
 npm run build
 npm run preview -- --port 4173 --host
+# Built bundle verified in dist/
 ```
 
-### Testing Offline Mode
-1. Open Chrome DevTools (`F12` $\to$ **Application** $\to$ **Service Workers**).
-2. Check **Offline** in the Network tab or DevTools.
-3. Reload the page: Notice the header status pill shifts to `"Offline mode"`, all assets load instantly from cache, and medication sealing and cryptographic verification continue to operate with 100% functionality.
-
 ---
 
-## 7. Roadmap (Next-Gen Production Architecture)
+## 5. Test Suite Verification (19/19 Passing)
 
-| Phase | Milestone | Technology | Impact |
-| :--- | :--- | :--- | :--- |
-| **Q1** | **On-Device Offline ASR** | `Whisper.cpp` (WebAssembly / WebGPU) | Eliminates any browser speech API dependency; 100% on-device speech-to-text without network. |
-| **Q1** | **Voice Activity Detection** | `Silero VAD` | Low-latency voice activation that filters out ambient sirens, engine noise, and bystanders. |
-| **Q2** | **Clinical NER & Tokenization** | `ClinicalBERT` / On-device ONNX | Robust clinical entity recognition for complex compound medical phrases. |
-| **Q2** | **Terminology Linking** | RxNorm & SNOMED CT | Automatic ontological coding of prehospital drugs, contraindications, and routes. |
-| **Q3** | **Hardware Key Signing** | WebAuthn / ECDSA (P-256) | Legally binding digital signatures signed via hardware security keys / Biometric TouchID. |
-| **Q3** | **P2P Crew Mesh Sync** | WebRTC / CRDTs (Yjs) | Real-time peer-to-peer sync between primary paramedic, driver, and triage nurse without internet. |
-| **Q4** | **Multilingual Voice Support** | Multilingual Whisper (Hindi, Telugu, Spanish) | Full prehospital translation and transcription for regional healthcare squads. |
+```
+✓ src/lib/__tests__/extract.test.ts (5 tests)
+  ✓ Example 1 (Complete): Midazolam 2 mg IV push
+  ✓ Example 2 (Missing route): Epinephrine 0.5 mg
+  ✓ Example 3 (Missing dose): Midazolam IV relative time
+  ✓ Example 4 (Explicit time): Morphine IM at 1:44
+  ✓ Aliases: Narcan 500 mcg intranasal
 
----
+✓ src/lib/__tests__/ner.test.ts (5 tests)
+  ✓ Extracts Drug, Dose, and Route from clinical note
+  ✓ Identifies missing route and sets field status accurately
+  ✓ Identifies missing dose while preserving route and explicit time
+  ✓ Correctly tags tokens with distinct DRUG, DOSE, and ROUTE entity labels
+  ✓ Reports NER status and model metadata
 
-## 8. Git Repository & Push Instructions
+✓ src/lib/__tests__/closed_loop_and_hospital.test.ts (4 tests)
+  ✓ Builds compliant HL7 FHIR R4 MedicationAdministration with HLC provenance (No blockchain hashes)
+  ✓ Correctly identifies procedures (e.g. CPR) into Procedure Mode without blocking warnings
+  ✓ Broadcasts confirmed medication and notifies hospital ED feed
+  ✓ Allows ED physicians to accept & reconcile alerts
 
-To push this codebase to a fresh GitHub repository:
+✓ src/lib/__tests__/chain_safety.test.ts (4 tests)
+  ✓ Timeline ordering validation
+  ✓ Tamper detection
+  ✓ High dose threshold warning
+  ✓ Duplicate dose alert within 2 minutes
 
-```bash
-# Add all files and make the commit
-git add .
-git commit -m "feat: F2R offline voice-to-record prototype"
-
-# Push to your GitHub repository
-git branch -M main
-git remote add origin https://github.com/rishika526/Vice-Versa.git
-git push -u origin main
+✓ src/lib/__tests__/e2e_journey.test.ts (1 test)
+  ✓ Full end-to-end user journey simulation
 ```

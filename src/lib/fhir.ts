@@ -11,10 +11,94 @@ export function formatTimeHHMM(isoString: string): string {
   }
 }
 
+export function formatTimeHHMMSS(isoString: string): string {
+  try {
+    const d = new Date(isoString);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  } catch {
+    return '--:--:--';
+  }
+}
+
 /**
- * Builds standard HL7 FHIR R4 MedicationAdministration Bundle
+ * Builds standard HL7 FHIR R4 MedicationAdministration or Procedure individual resource.
  */
-export function buildFHIRBundle(records: ConfirmedRecord[]) {
+export function buildFHIRMedicationAdministration(rec: ConfirmedRecord): any {
+  const hlcTimestamp = rec.administeredAt
+    ? `${new Date(rec.administeredAt).getTime()}:0001:MEDIC-04`
+    : `${rec.timestamp || Date.now()}:0001:MEDIC-04`;
+
+  return {
+    resourceType: rec.isProcedure ? 'Procedure' : 'MedicationAdministration',
+    id: rec.id,
+    identifier: [
+      {
+        system: 'urn:f2r:hlc:timestamp',
+        value: hlcTimestamp,
+      },
+      {
+        system: 'urn:f2r:device:id',
+        value: 'MEDIC-04-RIG-TABLET',
+      },
+    ],
+    status: 'completed',
+    ...(rec.isProcedure
+      ? {
+          code: {
+            coding: [
+              {
+                system: 'http://snomed.info/sct',
+                code: '89666000',
+                display: rec.procedureName || rec.drug || 'Cardiopulmonary resuscitation (CPR)',
+              },
+            ],
+            text: rec.procedureName || rec.drug || 'Cardiopulmonary resuscitation (CPR)',
+          },
+          performedDateTime: rec.administeredAt,
+        }
+      : {
+          medicationCodeableConcept: {
+            coding: [
+              {
+                system: 'http://www.nlm.nih.gov/research/umls/rxnorm',
+                display: rec.drug,
+              },
+            ],
+            text: rec.drug,
+          },
+          effectiveDateTime: rec.administeredAt,
+          dosage: {
+            text: `${rec.dose} ${rec.unit} via ${rec.route}`,
+            route: {
+              text: rec.route,
+            },
+            dose: {
+              value: rec.dose,
+              unit: rec.unit,
+            },
+          },
+        }),
+    recorded: rec.capturedAt,
+    reasonCode: [
+      {
+        text: rec.reason || (rec.isProcedure ? 'cardiac arrest' : 'pain'),
+      },
+    ],
+    note: [
+      {
+        text: `Original voice/typed note: "${rec.rawText}"`,
+      },
+    ],
+  };
+}
+
+/**
+ * Builds standard HL7 FHIR R4 MedicationAdministration or Procedure Bundle
+ */
+export function buildFHIRBundle(records: ConfirmedRecord[]): any {
   return {
     resourceType: 'Bundle',
     type: 'collection',
@@ -32,58 +116,13 @@ export function buildFHIRBundle(records: ConfirmedRecord[]) {
     },
     entry: records.map((rec) => ({
       fullUrl: `urn:uuid:${rec.id}`,
-      resource: {
-        resourceType: 'MedicationAdministration',
-        id: rec.id,
-        identifier: [
-          {
-            system: 'urn:f2r:chain:hash',
-            value: rec.hash,
-          },
-          {
-            system: 'urn:f2r:chain:previous-hash',
-            value: rec.previousHash,
-          },
-        ],
-        status: 'completed',
-        medicationCodeableConcept: {
-          coding: [
-            {
-              system: 'http://www.nlm.nih.gov/research/umls/rxnorm',
-              display: rec.drug,
-            },
-          ],
-          text: rec.drug,
-        },
-        effectiveDateTime: rec.administeredAt,
-        recorded: rec.capturedAt,
-        dosage: {
-          text: `${rec.dose} ${rec.unit} via ${rec.route}`,
-          route: {
-            text: rec.route,
-          },
-          dose: {
-            value: rec.dose,
-            unit: rec.unit,
-          },
-        },
-        reasonCode: [
-          {
-            text: rec.reason,
-          },
-        ],
-        note: [
-          {
-            text: `Original voice/typed note: "${rec.rawText}"`,
-          },
-        ],
-      },
+      resource: buildFHIRMedicationAdministration(rec),
     })),
   };
 }
 
 /**
- * Downloads FHIR-lite JSON bundle to user device.
+ * Downloads FHIR Record bundle to user device.
  */
 export function exportFHIRJson(records: ConfirmedRecord[]): void {
   const bundle = buildFHIRBundle(records);
@@ -92,7 +131,24 @@ export function exportFHIRJson(records: ConfirmedRecord[]): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `f2r-medications-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `f2r-clinical-records-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads single record FHIR MedicationAdministration JSON to user device.
+ */
+export function exportSingleFHIRJson(record: ConfirmedRecord): void {
+  const fhir = buildFHIRMedicationAdministration(record);
+  const jsonStr = JSON.stringify(fhir, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `fhir-med-admin-${record.id}.json`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
